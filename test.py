@@ -57,7 +57,7 @@ print(args)
 use_llava = not args.no_llava
 
 # load SUPIR
-model = create_SUPIR_model('options/SUPIR_v0_tiled.yaml', SUPIR_sign=args.SUPIR_sign)
+model = create_SUPIR_model('options/SUPIR_v0_Juggernautv9_lightning.yaml', SUPIR_sign=args.SUPIR_sign)
 if args.loading_half_params:
     model = model.half()
 if args.use_tile_vae:
