@@ -2,8 +2,6 @@ import torch.cuda
 import argparse
 from SUPIR.util import create_SUPIR_model, PIL2Tensor, Tensor2PIL, convert_dtype
 from PIL import Image
-from llava.llava_agent import LLavaAgent
-from CKPT_PTH import LLAVA_MODEL_PATH
 import os
 from torch.nn.functional import interpolate
 
@@ -67,11 +65,7 @@ if args.use_tile_vae:
 model.ae_dtype = convert_dtype(args.ae_dtype)
 model.model.dtype = convert_dtype(args.diff_dtype)
 model = model.to(SUPIR_device)
-# load LLaVA
-if use_llava:
-    llava_agent = LLavaAgent(LLAVA_MODEL_PATH, device=LLaVA_device, load_8bit=args.load_8bit_llava, load_4bit=False)
-else:
-    llava_agent = None
+llava_agent = None
 
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in os.listdir(args.img_dir):
