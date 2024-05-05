@@ -57,7 +57,7 @@ print(args)
 use_llava = not args.no_llava
 
 # load SUPIR
-model = create_SUPIR_model('options/SUPIR_v0.yaml', SUPIR_sign=args.SUPIR_sign)
+model = create_SUPIR_model('options/SUPIR_v0_tiled.yaml', SUPIR_sign=args.SUPIR_sign)
 if args.loading_half_params:
     model = model.half()
 if args.use_tile_vae:
@@ -82,10 +82,7 @@ for img_pth in os.listdir(args.img_dir):
     clean_PIL_img = Tensor2PIL(clean_imgs[0], h1, w1)
 
     # step 2: LLaVA
-    if use_llava:
-        captions = llava_agent.gen_image_caption([clean_PIL_img])
-    else:
-        captions = ['']
+    captions = ['']
     print(captions)
 
     # # step 3: Diffusion Process
