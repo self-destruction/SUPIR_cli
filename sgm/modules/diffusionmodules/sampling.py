@@ -2,13 +2,15 @@
     Partially ported from https://github.com/crowsonkb/k-diffusion/blob/master/k_diffusion/sampling.py
 """
 
-
 from typing import Dict, Union
 
+import gradio as gr
 import torch
+from k_diffusion.sampling import get_sigmas_karras, BrownianTreeNoiseSampler
 from omegaconf import ListConfig, OmegaConf
 from tqdm import tqdm
 
+from ui_helpers import printt
 from ...modules.diffusionmodules.sampling_utils import (
     get_ancestral_step,
     linear_multistep_coeff,
@@ -17,19 +19,18 @@ from ...modules.diffusionmodules.sampling_utils import (
     to_sigma,
 )
 from ...util import append_dims, default, instantiate_from_config
-from k_diffusion.sampling import get_sigmas_karras, BrownianTreeNoiseSampler
 
 DEFAULT_GUIDER = {"target": "sgm.modules.diffusionmodules.guiders.IdentityGuider"}
 
 
 class BaseDiffusionSampler:
     def __init__(
-        self,
-        discretization_config: Union[Dict, ListConfig, OmegaConf],
-        num_steps: Union[int, None] = None,
-        guider_config: Union[Dict, ListConfig, OmegaConf, None] = None,
-        verbose: bool = False,
-        device: str = "cuda",
+            self,
+            discretization_config: Union[Dict, ListConfig, OmegaConf],
+            num_steps: Union[int, None] = None,
+            guider_config: Union[Dict, ListConfig, OmegaConf, None] = None,
+            verbose: bool = False,
+            device: str = "cuda",
     ):
         self.num_steps = num_steps
         self.discretization = instantiate_from_config(discretization_config)
@@ -85,7 +86,7 @@ class SingleStepDiffusionSampler(BaseDiffusionSampler):
 
 class EDMSampler(SingleStepDiffusionSampler):
     def __init__(
-        self, s_churn=0.0, s_tmin=0.0, s_tmax=float("inf"), s_noise=1.0, *args, **kwargs
+            self, s_churn=0.0, s_tmin=0.0, s_tmax=float("inf"), s_noise=1.0, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
 
@@ -98,7 +99,7 @@ class EDMSampler(SingleStepDiffusionSampler):
         sigma_hat = sigma * (gamma + 1.0)
         if gamma > 0:
             eps = torch.randn_like(x) * self.s_noise
-            x = x + eps * append_dims(sigma_hat**2 - sigma**2, x.ndim) ** 0.5
+            x = x + eps * append_dims(sigma_hat ** 2 - sigma ** 2, x.ndim) ** 0.5
 
         denoised = self.denoise(x, denoiser, sigma_hat, cond, uc)
         # print('denoised', denoised.mean(axis=[0, 2, 3]))
@@ -118,7 +119,7 @@ class EDMSampler(SingleStepDiffusionSampler):
 
         for i in self.get_sigma_gen(num_sigmas):
             gamma = (
-                min(self.s_churn / (num_sigmas - 1), 2**0.5 - 1)
+                min(self.s_churn / (num_sigmas - 1), 2 ** 0.5 - 1)
                 if self.s_tmin <= sigmas[i] <= self.s_tmax
                 else 0.0
             )
@@ -177,10 +178,10 @@ class AncestralSampler(SingleStepDiffusionSampler):
 
 class LinearMultistepSampler(BaseDiffusionSampler):
     def __init__(
-        self,
-        order=4,
-        *args,
-        **kwargs,
+            self,
+            order=4,
+            *args,
+            **kwargs,
     ):
         super().__init__(*args, **kwargs)
 
@@ -215,7 +216,7 @@ class LinearMultistepSampler(BaseDiffusionSampler):
 
 class EulerEDMSampler(EDMSampler):
     def possible_correction_step(
-        self, euler_step, x, d, dt, next_sigma, denoiser, cond, uc
+            self, euler_step, x, d, dt, next_sigma, denoiser, cond, uc
     ):
         # print("euler_step: ", euler_step.mean(axis=[0, 2, 3]))
         return euler_step
@@ -223,7 +224,7 @@ class EulerEDMSampler(EDMSampler):
 
 class HeunEDMSampler(EDMSampler):
     def possible_correction_step(
-        self, euler_step, x, d, dt, next_sigma, denoiser, cond, uc
+            self, euler_step, x, d, dt, next_sigma, denoiser, cond, uc
     ):
         if torch.sum(next_sigma) < 1e-14:
             # Save a network evaluation if all noise levels are 0
@@ -314,15 +315,15 @@ class DPMPP2MSampler(BaseDiffusionSampler):
             return mult1, mult2
 
     def sampler_step(
-        self,
-        old_denoised,
-        previous_sigma,
-        sigma,
-        next_sigma,
-        denoiser,
-        x,
-        cond,
-        uc=None,
+            self,
+            old_denoised,
+            previous_sigma,
+            sigma,
+            next_sigma,
+            denoiser,
+            x,
+            cond,
+            uc=None,
     ):
         denoised = self.denoise(x, denoiser, sigma, cond, uc)
 
@@ -370,7 +371,7 @@ class DPMPP2MSampler(BaseDiffusionSampler):
 
 class SubstepSampler(EulerAncestralSampler):
     def __init__(self, s_churn=0.0, s_tmin=0.0, s_tmax=float("inf"), s_noise=1.0, restore_cfg=4.0,
-            restore_cfg_s_tmin=0.05, eta=1., n_sample_steps=4, *args, **kwargs):
+                 restore_cfg_s_tmin=0.05, eta=1., n_sample_steps=4, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.n_sample_steps = n_sample_steps
         self.steps_subset = [0, 100, 200, 300, 1000]
@@ -379,7 +380,7 @@ class SubstepSampler(EulerAncestralSampler):
         sigmas = self.discretization(1000, device=self.device)
         sigmas = sigmas[
             self.steps_subset[: self.num_steps] + self.steps_subset[-1:]
-        ]
+            ]
         print(sigmas)
         # uc = cond
         x *= torch.sqrt(1.0 + sigmas[0] ** 2.0)
@@ -421,7 +422,7 @@ class SubstepSampler(EulerAncestralSampler):
 
 class RestoreDPMPP2MSampler(DPMPP2MSampler):
     def __init__(self, s_churn=0.0, s_tmin=0.0, s_tmax=float("inf"), s_noise=1.0, restore_cfg=4.0,
-            restore_cfg_s_tmin=0.05, eta=1., *args, **kwargs):
+                 restore_cfg_s_tmin=0.05, eta=1., *args, **kwargs):
         self.s_noise = s_noise
         self.eta = eta
         super().__init__(*args, **kwargs)
@@ -434,7 +435,7 @@ class RestoreDPMPP2MSampler(DPMPP2MSampler):
     def get_mult(self, h, r, t, t_next, previous_sigma):
         eta_h = self.eta * h
         mult1 = to_sigma(t_next) / to_sigma(t) * (-eta_h).exp()
-        mult2 = (-h -eta_h).expm1()
+        mult2 = (-h - eta_h).expm1()
 
         if previous_sigma is not None:
             mult3 = 1 + 1 / (2 * r)
@@ -443,19 +444,18 @@ class RestoreDPMPP2MSampler(DPMPP2MSampler):
         else:
             return mult1, mult2
 
-
     def sampler_step(
-        self,
-        old_denoised,
-        previous_sigma,
-        sigma,
-        next_sigma,
-        denoiser,
-        x,
-        cond,
-        uc=None,
-        eps_noise=None,
-        control_scale=1.0,
+            self,
+            old_denoised,
+            previous_sigma,
+            sigma,
+            next_sigma,
+            denoiser,
+            x,
+            cond,
+            uc=None,
+            eps_noise=None,
+            control_scale=1.0,
     ):
         denoised = self.denoise(x, denoiser, sigma, cond, uc, control_scale=control_scale)
 
@@ -494,7 +494,8 @@ class RestoreDPMPP2MSampler(DPMPP2MSampler):
         noise_sampler = BrownianTreeNoiseSampler(x, sigmas_min, sigmas_max)
 
         old_denoised = None
-        for i in self.get_sigma_gen(num_sigmas):
+        progress = gr.Progress(track_tqdm=True)
+        for _idx, i in progress.tqdm(enumerate(self.get_sigma_gen(num_sigmas)), total=num_sigmas, desc="Sampling"):
             if i > 0 and torch.sum(s_in * sigmas[i + 1]) > 1e-14:
                 eps_noise = noise_sampler(s_in * sigmas[i], s_in * sigmas[i + 1])
             else:
@@ -520,14 +521,14 @@ def to_d_center(denoised, x_center, x):
     v_center = (denoised - x_center).view(b, -1)
     v_denoise = (x - denoised).view(b, -1)
     d_center = v_center - v_denoise * (v_center * v_denoise).sum(dim=1).view(b, 1) / \
-                (v_denoise * v_denoise).sum(dim=1).view(b, 1)
+               (v_denoise * v_denoise).sum(dim=1).view(b, 1)
     d_center = d_center / d_center.view(x.shape[0], -1).norm(dim=1).view(-1, 1)
     return d_center.view(denoised.shape)
 
 
 class RestoreEDMSampler(SingleStepDiffusionSampler):
     def __init__(
-        self, s_churn=0.0, s_tmin=0.0, s_tmax=float("inf"), s_noise=1.0, restore_cfg=4.0,
+            self, s_churn=0.0, s_tmin=0.0, s_tmax=float("inf"), s_noise=1.0, restore_cfg=4.0,
             restore_cfg_s_tmin=0.05, *args, **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -553,7 +554,7 @@ class RestoreEDMSampler(SingleStepDiffusionSampler):
                 eps = eps_noise * self.s_noise
             else:
                 eps = torch.randn_like(x) * self.s_noise
-            x = x + eps * append_dims(sigma_hat**2 - sigma**2, x.ndim) ** 0.5
+            x = x + eps * append_dims(sigma_hat ** 2 - sigma ** 2, x.ndim) ** 0.5
 
         if use_linear_control_scale:
             control_scale = (sigma[0].item() / self.sigma_max) * (control_scale_start - control_scale) + control_scale
@@ -575,9 +576,10 @@ class RestoreEDMSampler(SingleStepDiffusionSampler):
             x, cond, uc, num_steps
         )
 
-        for _idx, i in enumerate(self.get_sigma_gen(num_sigmas)):
+        progress = gr.Progress(track_tqdm=True)
+        for _idx, i in progress.tqdm(enumerate(self.get_sigma_gen(num_sigmas)), total=num_sigmas, desc="Sampling"):
             gamma = (
-                min(self.s_churn / (num_sigmas - 1), 2**0.5 - 1)
+                min(self.s_churn / (num_sigmas - 1), 2 ** 0.5 - 1)
                 if self.s_tmin <= sigmas[i] <= self.s_tmax
                 else 0.0
             )
@@ -620,9 +622,10 @@ class TiledRestoreEDMSampler(RestoreEDMSampler):
             x, cond, uc, num_steps
         )
 
-        for _idx, i in enumerate(self.get_sigma_gen(num_sigmas)):
+        progress = gr.Progress(track_tqdm=True)
+        for _idx, i in progress.tqdm(enumerate(self.get_sigma_gen(num_sigmas)), total=num_sigmas, desc="Sampling"):
             gamma = (
-                min(self.s_churn / (num_sigmas - 1), 2**0.5 - 1)
+                min(self.s_churn / (num_sigmas - 1), 2 ** 0.5 - 1)
                 if self.s_tmin <= sigmas[i] <= self.s_tmax
                 else 0.0
             )
@@ -668,6 +671,7 @@ class TiledRestoreDPMPP2MSampler(RestoreDPMPP2MSampler):
         self.tile_weights = gaussian_weights(self.tile_size, self.tile_size, 1)
 
     def __call__(self, denoiser, x, cond, uc=None, num_steps=None, control_scale=1.0, **kwargs):
+        printt("TiledRestoreDPMPP2MSampler")
         use_local_prompt = isinstance(cond, list)
         b, _, h, w = x.shape
         latent_tiles_iterator = _sliding_windows(h, w, self.tile_size, self.tile_stride)
@@ -687,7 +691,8 @@ class TiledRestoreDPMPP2MSampler(RestoreDPMPP2MSampler):
         noise_sampler = BrownianTreeNoiseSampler(x, sigmas_min, sigmas_max)
 
         old_denoised = None
-        for _idx, i in enumerate(self.get_sigma_gen(num_sigmas)):
+        progress = gr.Progress(track_tqdm=True)
+        for _idx, i in progress.tqdm(enumerate(self.get_sigma_gen(num_sigmas)), total=num_sigmas, desc="Sampling"):
             if i > 0 and torch.sum(s_in * sigmas[i + 1]) > 1e-14:
                 eps_noise = noise_sampler(s_in * sigmas[i], s_in * sigmas[i + 1])
             else:

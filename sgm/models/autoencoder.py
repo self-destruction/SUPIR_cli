@@ -38,7 +38,6 @@ class AbstractAutoencoder(pl.LightningModule):
 
         if self.use_ema:
             self.model_ema = LitEma(self, decay=ema_decay)
-            print(f"Keeping EMAs of {len(list(self.model_ema.buffers()))}.")
 
         if ckpt_path is not None:
             self.init_from_ckpt(ckpt_path, ignore_keys=ignore_keys)
@@ -60,16 +59,12 @@ class AbstractAutoencoder(pl.LightningModule):
         for k in keys:
             for ik in ignore_keys:
                 if re.match(ik, k):
-                    print("Deleting key {} from state_dict.".format(k))
                     del sd[k]
         missing, unexpected = self.load_state_dict(sd, strict=False)
-        print(
-            f"Restored from {path} with {len(missing)} missing and {len(unexpected)} unexpected keys"
-        )
-        if len(missing) > 0:
-            print(f"Missing Keys: {missing}")
-        if len(unexpected) > 0:
-            print(f"Unexpected Keys: {unexpected}")
+        # if len(missing) > 0:
+        #     print(f"Missing Keys: {missing}")
+        # if len(unexpected) > 0:
+        #     print(f"Unexpected Keys: {unexpected}")
 
     @abstractmethod
     def get_input(self, batch) -> Any:
@@ -85,15 +80,15 @@ class AbstractAutoencoder(pl.LightningModule):
         if self.use_ema:
             self.model_ema.store(self.parameters())
             self.model_ema.copy_to(self)
-            if context is not None:
-                print(f"{context}: Switched to EMA weights")
+            # if context is not None:
+            #     print(f"{context}: Switched to EMA weights")
         try:
             yield None
         finally:
             if self.use_ema:
                 self.model_ema.restore(self.parameters())
-                if context is not None:
-                    print(f"{context}: Restored training weights")
+                # if context is not None:
+                #     print(f"{context}: Restored training weights")
 
     @abstractmethod
     def encode(self, *args, **kwargs) -> torch.Tensor:
@@ -104,7 +99,6 @@ class AbstractAutoencoder(pl.LightningModule):
         raise NotImplementedError("decode()-method of abstract base class called")
 
     def instantiate_optimizer_from_config(self, params, lr, cfg):
-        print(f"loading >>> {cfg['target']} <<< optimizer from config")
         return get_obj_from_str(cfg["target"])(
             params, lr=lr, **cfg.get("params", dict())
         )
