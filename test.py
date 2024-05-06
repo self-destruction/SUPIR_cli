@@ -1,7 +1,8 @@
 import torch.cuda
 import argparse
-from SUPIR.util import create_SUPIR_model, PIL2Tensor, Tensor2PIL, convert_dtype
+from SUPIR.util import create_SUPIR_model, PIL2Tensor, Tensor2Numpy, Tensor2PIL, convert_dtype
 from PIL import Image
+import numpy as np
 import os
 from torch.nn.functional import interpolate
 
@@ -81,7 +82,12 @@ for img_pth in os.listdir(args.img_dir):
     captions = []
 
     LQ_ips = Image.open(os.path.join(args.img_dir, img_pth))
+    # Pil -> NumPy
     input_image = np.array(LQ_ips)
+
+    # Pil -> Tensor -> NumPy
+    # LQ_img, h0, w0 = PIL2Tensor(LQ_ips, upsacle=args.upscale, min_size=args.min_size)
+    # input_image = Tensor2Numpy(LQ_img, h0, w0)
     input_image = HWC3(input_image)
     input_image = upscale_image(input_image, args.upscale, unit_resolution=32,
                                 min_size=args.min_size)
