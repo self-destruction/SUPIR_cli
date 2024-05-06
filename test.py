@@ -57,18 +57,27 @@ print(args)
 use_llava = not args.no_llava
 
 # load SUPIR
+print('# load SUPIR')
 model = create_SUPIR_model('options/SUPIR_v0_Juggernautv9_lightning_tiled.yaml', SUPIR_sign=args.SUPIR_sign)
+print('loaded SUPIR!')
 if args.loading_half_params:
+    print('# load half model')
     model = model.half()
+    print('loaded half model!')
 if args.use_tile_vae:
+    print('# init tile vae')
     model.init_tile_vae(encoder_tile_size=args.encoder_tile_size, decoder_tile_size=args.decoder_tile_size)
+    print('inited tile vae!')
 model.ae_dtype = convert_dtype(args.ae_dtype)
 model.model.dtype = convert_dtype(args.diff_dtype)
+print('# load model to ' . SUPIR_device)
 model = model.to(SUPIR_device)
+print('model loaded!')
 
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in os.listdir(args.img_dir):
     img_name = os.path.splitext(img_pth)[0]
+    print('# start process image: ' . img_name)
     captions = []
 
     LQ_ips = Image.open(os.path.join(args.img_dir, img_pth))
@@ -76,11 +85,13 @@ for img_pth in os.listdir(args.img_dir):
     LQ_img = LQ_img.unsqueeze(0).to(SUPIR_device)[:, :3, :, :]
 
     # # step 3: Diffusion Process
+    print('# start batchify sample')
     samples = model.batchify_sample(LQ_img, captions, num_steps=args.edm_steps, restoration_scale=args.s_stage1, s_churn=args.s_churn,
                                     s_noise=args.s_noise, cfg_scale=args.s_cfg, control_scale=args.s_stage2, seed=args.seed,
                                     num_samples=args.num_samples, p_p=args.a_prompt, n_p=args.n_prompt, color_fix_type=args.color_fix_type,
                                     use_linear_CFG=args.linear_CFG, use_linear_control_scale=args.linear_s_stage2,
                                     cfg_scale_start=args.spt_linear_CFG, control_scale_start=args.spt_linear_s_stage2)
+    print('batchified!')
     # save
     for _i, sample in enumerate(samples):
         Tensor2PIL(sample, h0, w0).save(f'{args.save_dir}/{img_name}_{_i}.png')
