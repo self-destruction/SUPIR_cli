@@ -151,7 +151,7 @@ model:
 
 SDXL_CKPT: /kaggle/working/SUPIR_kaggle/models/sd_xl_base_1.0_0.9vae.safetensors
 SUPIR_CKPT_F: /kaggle/working/SUPIR_kaggle/models/v0F.ckpt
-SUPIR_CKPT_Q: /kaggle/working/SUPIR_kaggle/models/SUPIR-v0Q.ckpt
+SUPIR_CKPT_Q: /kaggle/working/SUPIR_kaggle/models/v0Q.ckpt
 SUPIR_CKPT: ~
 
 default_setting:
