@@ -59,7 +59,7 @@ use_llava = not args.no_llava
 
 # load SUPIR
 print('# load SUPIR')
-model = create_SUPIR_model('options/SUPIR_v0.yaml', SUPIR_sign=args.SUPIR_sign)
+model = create_SUPIR_model('options/SUPIR_v0.yaml', supir_sign=args.SUPIR_sign).to(SUPIR_device)
 print('loaded SUPIR!')
 if args.loading_half_params:
     print('# load half model')
