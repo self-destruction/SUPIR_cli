@@ -132,6 +132,8 @@ model:
         restore_cfg: 4.0
         s_churn: 0
         s_noise: 1.003
+        tile_size: 128
+        tile_stride: 64
         discretization_config:
           target: sgm.modules.diffusionmodules.discretizer.LegacyDDPMDiscretization
         guider_config:
@@ -154,9 +156,3 @@ SUPIR_CKPT_F: /kaggle/temp/models/SUPIR-v0F.ckpt
 SUPIR_CKPT_Q: /kaggle/temp/models/SUPIR-v0Q.ckpt
 SUPIR_CKPT: ~
 
-default_setting:
-  s_cfg_Quality: 2.0
-  spt_linear_CFG_Quality: 2.0
-  s_cfg_Fidelity: 1.5
-  spt_linear_CFG_Fidelity: 1.5
-  edm_steps: 8
