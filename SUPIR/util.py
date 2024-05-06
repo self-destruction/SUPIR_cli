@@ -10,7 +10,6 @@ from torch.nn.functional import interpolate
 from SUPIR.utils import models_utils
 from SUPIR.utils.devices import torch_gc
 from sgm.util import instantiate_from_config
-from ui_helpers import printt
 from SUPIR.utils import models_utils, sd_model_initialization, shared
 
 def get_state_dict(d):
@@ -41,7 +40,7 @@ def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device
         '': convert_dtype(weight_dtype),
     }   
     # Instantiate model from config
-    printt(f'Loading model from [{config_path}]')
+    print(f'Loading model from [{config_path}]')
     if shared.opts.fast_load_sd:
         with sd_model_initialization.DisableInitialization(disable_clip=False):
             with sd_model_initialization.InitializeOnMeta():    
@@ -49,11 +48,11 @@ def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device
     else:
         model = instantiate_from_config(config.model)
 
-    printt(f'Loaded model from [{config_path}]')
+    print(f'Loaded model from [{config_path}]')
 
     # Function to load state dict to the chosen device
     def load_to_device(checkpoint_path):
-        printt(f'Loading state_dict from [{checkpoint_path}]')
+        print(f'Loading state_dict from [{checkpoint_path}]')
         if checkpoint_path and os.path.exists(checkpoint_path):
             if torch.cuda.is_available():
                 tgt_device = 'cuda'
@@ -63,9 +62,9 @@ def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device
             with sd_model_initialization.LoadStateDictOnMeta(state_dict, device=model.device, weight_dtype_conversion=weight_dtype_conversion):
                 models_utils.load_model_weights(model, state_dict)  
             torch_gc()            
-            printt(f'Loaded state_dict from [{checkpoint_path}]')
+            print(f'Loaded state_dict from [{checkpoint_path}]')
         else:
-            printt(f'No checkpoint found at [{checkpoint_path}]')
+            print(f'No checkpoint found at [{checkpoint_path}]')
 
     # Load state dicts as needed
     load_to_device(config.get('SDXL_CKPT'))
@@ -77,7 +76,7 @@ def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device
         load_to_device(ckpt_path)
 
     model.sampler = sampler
-    printt(f'Loaded model config from [{config_path}] and moved to {device}')
+    print(f'Loaded model config from [{config_path}] and moved to {device}')
 
     return model
 
