@@ -80,7 +80,7 @@ print('model loaded!')
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in os.listdir(args.img_dir):
     img_name = os.path.splitext(img_pth)[0]
-    print('# start process image: ' . img_name)
+    print('# start process image: ' + img_name)
     captions = []
 
     LQ_ips = Image.open(os.path.join(args.img_dir, img_pth))
