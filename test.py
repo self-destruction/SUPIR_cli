@@ -65,7 +65,6 @@ if args.use_tile_vae:
 model.ae_dtype = convert_dtype(args.ae_dtype)
 model.model.dtype = convert_dtype(args.diff_dtype)
 model = model.to(SUPIR_device)
-llava_agent = None
 
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in os.listdir(args.img_dir):
@@ -74,16 +73,6 @@ for img_pth in os.listdir(args.img_dir):
     LQ_ips = Image.open(os.path.join(args.img_dir, img_pth))
     LQ_img, h0, w0 = PIL2Tensor(LQ_ips, upsacle=args.upscale, min_size=args.min_size)
     LQ_img = LQ_img.unsqueeze(0).to(SUPIR_device)[:, :3, :, :]
-
-    # step 1: Pre-denoise for LLaVA, resize to 512
-    LQ_img_512, h1, w1 = PIL2Tensor(LQ_ips, upsacle=args.upscale, min_size=args.min_size, fix_resize=512)
-    LQ_img_512 = LQ_img_512.unsqueeze(0).to(SUPIR_device)[:, :3, :, :]
-    clean_imgs = model.batchify_denoise(LQ_img_512)
-    clean_PIL_img = Tensor2PIL(clean_imgs[0], h1, w1)
-
-    # step 2: LLaVA
-    captions = ['']
-    print(captions)
 
     # # step 3: Diffusion Process
     samples = model.batchify_sample(LQ_img, captions, num_steps=args.edm_steps, restoration_scale=args.s_stage1, s_churn=args.s_churn,
