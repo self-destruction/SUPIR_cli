@@ -176,6 +176,8 @@ def instantiate_from_config(config):
 
 
 def get_obj_from_str(string, reload=False, invalidate_cache=True):
+    print("get_obj_from_str: ")
+    print(string)
     module, cls = string.rsplit(".", 1)
     if invalidate_cache:
         importlib.invalidate_caches()
