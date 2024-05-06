@@ -73,7 +73,7 @@ if args.use_tile_vae:
     print('inited tile vae!')
 model.ae_dtype = convert_dtype(args.ae_dtype)
 model.model.dtype = convert_dtype(args.diff_dtype)
-print('# load model to ' . SUPIR_device)
+print('# load model to ' + SUPIR_device)
 model = model.to(SUPIR_device)
 print('model loaded!')
 
