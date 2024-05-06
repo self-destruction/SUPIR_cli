@@ -53,13 +53,15 @@ parser.add_argument("--use_tile_vae", action='store_true', default=False)
 parser.add_argument("--encoder_tile_size", type=int, default=512)
 parser.add_argument("--decoder_tile_size", type=int, default=64)
 parser.add_argument("--load_8bit_llava", action='store_true', default=False)
+parser.add_argument("--options", type=str, default='SUPIR_v0', choices=["SUPIR_v0", "SUPIR_v0_Juggernautv9_lightning_tiled", "SUPIR_v0_tiled"])
 args = parser.parse_args()
 print(args)
 use_llava = not args.no_llava
 
 # load SUPIR
 print('# load SUPIR')
-model = create_SUPIR_model('options/SUPIR_v0.yaml', supir_sign=args.SUPIR_sign).to(SUPIR_device)
+options_file = 'options/' + args.options + '.yaml'
+model = create_SUPIR_model(options_file, supir_sign=args.SUPIR_sign).to(SUPIR_device)
 print('loaded SUPIR!')
 if args.loading_half_params:
     print('# load half model')
