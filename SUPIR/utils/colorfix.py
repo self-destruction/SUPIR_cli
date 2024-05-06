@@ -11,6 +11,7 @@ from torch.nn import functional as F
 
 from torchvision.transforms import ToTensor, ToPILImage
 
+
 def adain_color_fix(target: Image, source: Image):
     # Convert images to tensors
     to_tensor = ToTensor()
@@ -25,6 +26,7 @@ def adain_color_fix(target: Image, source: Image):
     result_image = to_image(result_tensor.squeeze(0).clamp_(0.0, 1.0))
 
     return result_image
+
 
 def wavelet_color_fix(target: Image, source: Image):
     # Convert images to tensors
@@ -41,6 +43,7 @@ def wavelet_color_fix(target: Image, source: Image):
 
     return result_image
 
+
 def calc_mean_std(feat: Tensor, eps=1e-5):
     """Calculate mean and std for adaptive_instance_normalization.
     Args:
@@ -56,7 +59,8 @@ def calc_mean_std(feat: Tensor, eps=1e-5):
     feat_mean = feat.reshape(b, c, -1).mean(dim=2).reshape(b, c, 1, 1)
     return feat_mean, feat_std
 
-def adaptive_instance_normalization(content_feat:Tensor, style_feat:Tensor):
+
+def adaptive_instance_normalization(content_feat: Tensor, style_feat: Tensor):
     """Adaptive instance normalization.
     Adjust the reference features to have the similar color and illuminations
     as those in the degradate features.
@@ -69,6 +73,7 @@ def adaptive_instance_normalization(content_feat:Tensor, style_feat:Tensor):
     content_mean, content_std = calc_mean_std(content_feat)
     normalized_feat = (content_feat - content_mean.expand(size)) / content_std.expand(size)
     return normalized_feat * style_std.expand(size) + style_mean.expand(size)
+
 
 def wavelet_blur(image: Tensor, radius: int):
     """
@@ -91,6 +96,7 @@ def wavelet_blur(image: Tensor, radius: int):
     output = F.conv2d(image, kernel, groups=3, dilation=radius)
     return output
 
+
 def wavelet_decomposition(image: Tensor, levels=5):
     """
     Apply wavelet decomposition to the input tensor.
@@ -105,7 +111,8 @@ def wavelet_decomposition(image: Tensor, levels=5):
 
     return high_freq, low_freq
 
-def wavelet_reconstruction(content_feat:Tensor, style_feat:Tensor):
+
+def wavelet_reconstruction(content_feat: Tensor, style_feat: Tensor):
     """
     Apply wavelet decomposition, so that the content will have the same color as the style.
     """
@@ -117,4 +124,3 @@ def wavelet_reconstruction(content_feat:Tensor, style_feat:Tensor):
     del style_high_freq
     # reconstruct the content feature with the style's high frequency
     return content_high_freq + style_low_freq
-

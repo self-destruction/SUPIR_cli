@@ -116,6 +116,12 @@ class FaceRestoreHelper(object):
         self.use_parse = use_parse
         self.face_parse = init_parsing_model(model_name='parsenet', device=self.device)
 
+    def to(self, device):
+        # self.device = device
+        # self.face_detector = self.face_detector.to(device)
+        # self.face_parse = self.face_parse.to(device)
+        return self
+
     def set_upscale_factor(self, upscale_factor):
         self.upscale_factor = upscale_factor
 
@@ -157,7 +163,6 @@ class FaceRestoreHelper(object):
                                   only_keep_largest=False,
                                   scale=1):
         det_faces = self.face_detector(self.input_img, scale)
-
         if len(det_faces) == 0:
             print('No face detected. Try to increase upsample_num_times.')
             return 0
@@ -173,17 +178,13 @@ class FaceRestoreHelper(object):
                 self.det_faces = [det_faces[largest_idx]]
             else:
                 self.det_faces = det_faces
-
         if len(self.det_faces) == 0:
             return 0
-
         for face in self.det_faces:
             shape = self.shape_predictor_5(self.input_img, face.rect)
             landmark = np.array([[part.x, part.y] for part in shape.parts()])
             self.all_landmarks_5.append(landmark)
-
         return len(self.all_landmarks_5)
-
     def get_face_landmarks_5(self,
                              only_keep_largest=False,
                              only_center_face=False,
@@ -203,6 +204,7 @@ class FaceRestoreHelper(object):
             h, w = int(h * scale), int(w * scale)
             interp = cv2.INTER_AREA if scale < 1 else cv2.INTER_LINEAR
             input_img = cv2.resize(self.input_img, (w, h), interpolation=interp)
+            # Convert input_img to a PyTorch tensor and move it to the correct device
 
         with torch.no_grad():
             bboxes = self.face_detector.detect_faces(input_img)
