@@ -30,7 +30,7 @@ def load_state_dict(ckpt_path, location='cpu'):
 def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device='cpu', ckpt=None, sampler="DPMPP2M"):
     # Load the model configuration
     config = OmegaConf.load(config_path)
-    # config.model.params.sampler_config.target = sampler
+    config.model.params.sampler_config.target = sampler
     if ckpt:
         config.SDXL_CKPT = ckpt
 
