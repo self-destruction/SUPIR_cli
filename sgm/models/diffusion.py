@@ -73,7 +73,6 @@ class DiffusionEngine(pl.LightningModule):
         self.use_ema = use_ema
         if self.use_ema:
             self.model_ema = LitEma(self.model, decay=ema_decay_rate)
-            print(f"Keeping EMAs of {len(list(self.model_ema.buffers()))}.")
 
         self.scale_factor = scale_factor
         self.disable_first_stage_autocast = disable_first_stage_autocast
@@ -93,14 +92,11 @@ class DiffusionEngine(pl.LightningModule):
         else:
             raise NotImplementedError
 
-        missing, unexpected = self.load_state_dict(sd, strict=False)
-        print(
-            f"Restored from {path} with {len(missing)} missing and {len(unexpected)} unexpected keys"
-        )
-        if len(missing) > 0:
-            print(f"Missing Keys: {missing}")
-        if len(unexpected) > 0:
-            print(f"Unexpected Keys: {unexpected}")
+        # missing, unexpected = self.load_state_dict(sd, strict=False)
+        # if len(missing) > 0:
+        #     print(f"Missing Keys: {missing}")
+        # if len(unexpected) > 0:
+        #     print(f"Unexpected Keys: {unexpected}")
 
     def _init_first_stage(self, config):
         model = instantiate_from_config(config).eval()
@@ -178,15 +174,12 @@ class DiffusionEngine(pl.LightningModule):
         if self.use_ema:
             self.model_ema.store(self.model.parameters())
             self.model_ema.copy_to(self.model)
-            if context is not None:
-                print(f"{context}: Switched to EMA weights")
         try:
             yield None
         finally:
             if self.use_ema:
                 self.model_ema.restore(self.model.parameters())
-                if context is not None:
-                    print(f"{context}: Restored training weights")
+
 
     def instantiate_optimizer_from_config(self, params, lr, cfg):
         return get_obj_from_str(cfg["target"])(
@@ -202,7 +195,6 @@ class DiffusionEngine(pl.LightningModule):
         opt = self.instantiate_optimizer_from_config(params, lr, self.optimizer_config)
         if self.scheduler_config is not None:
             scheduler = instantiate_from_config(self.scheduler_config)
-            print("Setting up LambdaLR scheduler...")
             scheduler = [
                 {
                     "scheduler": LambdaLR(opt, lr_lambda=scheduler.schedule),
