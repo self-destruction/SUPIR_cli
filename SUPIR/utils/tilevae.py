@@ -69,7 +69,6 @@ from einops import rearrange
 from diffusers.utils.import_utils import is_xformers_available
 
 import SUPIR.utils.devices as devices
-from ui_helpers import printt
 
 try:
     import xformers
@@ -840,7 +839,7 @@ class VAEHook:
         @param z: latent vector
         @return: image
         """
-        printt("Tiled VAE: Forwarding")
+        print("Tiled VAE: Forwarding")
         device = next(self.net.parameters()).device
         dtype = z.dtype
         net = self.net
@@ -851,9 +850,9 @@ class VAEHook:
 
         N, height, width = z.shape[0], z.shape[2], z.shape[3]
         net.last_z_shape = z.shape
-        printt(f"Input shape: {z.shape}, splitting tiles")
+        print(f"Input shape: {z.shape}, splitting tiles")
         in_bboxes, out_bboxes = self.split_tiles(height, width)
-        printt(f"Splitting done, {len(in_bboxes)} tiles")
+        print(f"Splitting done, {len(in_bboxes)} tiles")
 
         # Prepare tiles by split the input latents
         tiles = []
@@ -865,12 +864,12 @@ class VAEHook:
         num_completed = 0
 
         # Build task queues
-        printt("Building task queues.")
+        print("Building task queues.")
         single_task_queue = build_task_queue(net, is_decoder)
-        printt("Task queues built.")
+        print("Task queues built.")
         # print(single_task_queue)
         if self.fast_mode:
-            printt("Fast mode setup.")
+            print("Fast mode setup.")
             # Fast mode: downsample the input image to the tile size,
             # then estimate the group norm parameters on the downsampled image
             scale_factor = tile_size / max(height, width)
@@ -889,8 +888,8 @@ class VAEHook:
             if self.estimate_group_norm(downsampled_z, estimate_task_queue, color_fix=self.color_fix):
                 single_task_queue = estimate_task_queue
             del downsampled_z
-            printt("Fast mode setup done.")
-        printt("Executing task queues.")
+            print("Fast mode setup done.")
+        print("Executing task queues.")
         task_queues = [clone_task_queue(single_task_queue) for _ in range(num_tiles)]
 
         # Dummy result
@@ -916,7 +915,7 @@ class VAEHook:
             # if state.interrupted: interrupted = True ; break
 
             group_norm_param = GroupNormParam()
-            printt("Executing task queues.")
+            print("Executing task queues.")
             for i in range(num_tiles) if forward else reversed(range(num_tiles)):
                 # if state.interrupted: interrupted = True ; break
 
@@ -979,10 +978,10 @@ class VAEHook:
                     del tile
 
             if interrupted:
-                printt("Interrupted.")
+                print("Interrupted.")
                 break
             if num_completed == num_tiles:
-                printt("Done.")
+                print("Done.")
                 break
 
             # insert the group norm task to the head of each task queue
@@ -994,7 +993,7 @@ class VAEHook:
 
         # Done!
         pbar.close()
-        printt("Task queues executed.")
+        print("Task queues executed.")
         return result.to(dtype) if result is not None else result_approx.to(device)
 
     def to(self, device):
