@@ -54,6 +54,9 @@ parser.add_argument("--encoder_tile_size", type=int, default=512)
 parser.add_argument("--decoder_tile_size", type=int, default=64)
 parser.add_argument("--load_8bit_llava", action='store_true', default=False)
 parser.add_argument("--options", type=str, default='SUPIR_v0', choices=["SUPIR_v0", "SUPIR_v0_Juggernautv9_lightning_tiled", "SUPIR_v0_tiled"])
+parser.add_argument("--sampler", type=str, default='DPMPP2M', choices=["EDM", "DPMPP2M"])
+parser.add_argument("--use_fast_tile", action='store_true', default=False,
+                    help="Use a faster tile encoding/decoding, may impact quality.")
 args = parser.parse_args()
 print(args)
 use_llava = not args.no_llava
@@ -61,7 +64,9 @@ use_llava = not args.no_llava
 # load SUPIR
 print('# load SUPIR')
 options_file = 'options/' + args.options + '.yaml'
-model = create_SUPIR_model(options_file, supir_sign=args.SUPIR_sign).to(SUPIR_device)
+tiled = "TiledRestore" if args.use_tile_vae else "Restore"
+sampler_cls = f"sgm.modules.diffusionmodules.sampling.{tiled}{args.sampler}Sampler"
+model = create_SUPIR_model(options_file, supir_sign=args.SUPIR_sign, SUPIR_DEVICE, None, sampler_cls).to(SUPIR_device)
 print('loaded SUPIR!')
 if args.loading_half_params:
     print('# load half model')
@@ -69,13 +74,17 @@ if args.loading_half_params:
     print('loaded half model!')
 if args.use_tile_vae:
     print('# init tile vae')
-    model.init_tile_vae(encoder_tile_size=args.encoder_tile_size, decoder_tile_size=args.decoder_tile_size)
+    model.init_tile_vae(encoder_tile_size=args.encoder_tile_size, decoder_tile_size=args.decoder_tile_size, use_fast=args.use_fast_tile)
     print('inited tile vae!')
 model.ae_dtype = convert_dtype(args.ae_dtype)
 model.model.dtype = convert_dtype(args.diff_dtype)
-print('# load model to ' + SUPIR_device)
-model = model.to(SUPIR_device)
-print('model loaded!')
+if model is not None:
+    print('# load model to ' + SUPIR_device)
+    model = model.to(SUPIR_device)
+    if getattr(model, 'move_to', None):
+        model.move_to(SUPIR_device)
+    torch.cuda.set_device(SUPIR_device)
+    print('model loaded!')
 
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in os.listdir(args.img_dir):
