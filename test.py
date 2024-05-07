@@ -22,17 +22,18 @@ bf16_supported = torch.cuda.is_bf16_supported()
 
 # hyparams here
 parser = argparse.ArgumentParser()
-parser.add_argument("--img_dir", type=str)
+parser.add_argument("--img_dir", type=str, default='')
+parser.add_argument("--img_path", type=str, default='')
 parser.add_argument("--save_dir", type=str)
 parser.add_argument("--upscale", type=int, default=1)
 parser.add_argument("--SUPIR_sign", type=str, default='Q', choices=['F', 'Q'])
 parser.add_argument("--seed", type=int, default=1234)
 parser.add_argument("--min_size", type=int, default=1024)
-parser.add_argument("--edm_steps", type=int, default=50)
+parser.add_argument("--edm_steps", type=int, default=10)
 parser.add_argument("--s_stage1", type=int, default=-1)
 parser.add_argument("--s_churn", type=int, default=5)
 parser.add_argument("--s_noise", type=float, default=1.003)
-parser.add_argument("--s_cfg", type=float, default=7.5)
+parser.add_argument("--s_cfg", type=float, default=2.0)
 parser.add_argument("--s_stage2", type=float, default=1.)
 parser.add_argument("--num_samples", type=int, default=1)
 parser.add_argument("--a_prompt", type=str,
@@ -48,7 +49,7 @@ parser.add_argument("--n_prompt", type=str,
 parser.add_argument("--color_fix_type", type=str, default='Wavelet', choices=["None", "AdaIn", "Wavelet"])
 parser.add_argument("--linear_CFG", action='store_true', default=True)
 parser.add_argument("--linear_s_stage2", action='store_true', default=False)
-parser.add_argument("--spt_linear_CFG", type=float, default=4.0)
+parser.add_argument("--spt_linear_CFG", type=float, default=2.0)
 parser.add_argument("--spt_linear_s_stage2", type=float, default=0.)
 parser.add_argument("--ae_dtype", type=str, default="bf16", choices=['fp32', 'bf16'])
 parser.add_argument("--diff_dtype", type=str, default="fp16", choices=['fp32', 'fp16', 'bf16'])
@@ -70,6 +71,9 @@ parser.add_argument("--autotune", action='store_true', default=False, help="Auto
 args = parser.parse_args()
 print(args)
 use_llava = not args.no_llava
+
+if args.img_path == '' && args.img_dir == '':
+    raise ValueError('img_path and img_dir are empty')
 
 total_vram = 100000
 if torch.cuda.is_available() and args.autotune:
@@ -124,8 +128,13 @@ if model is not None:
     torch.cuda.set_device(SUPIR_device)
     print('model loaded!')
 
+if args.img_path:
+    images = [args.img_path]  # список из одного элемента
+else:
+    images = os.listdir(args.img_dir)  # список всех изображений
+
 os.makedirs(args.save_dir, exist_ok=True)
-for img_pth in os.listdir(args.img_dir):
+for img_pth in images:
     img_name = os.path.splitext(img_pth)[0]
     print('# start process image: ' + img_name)
     captions = ['']
