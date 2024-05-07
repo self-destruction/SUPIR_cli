@@ -1,6 +1,7 @@
 import torch.cuda
 import argparse
 from SUPIR.util import create_SUPIR_model, PIL2Tensor, Tensor2Numpy, Tensor2PIL, HWC3, upscale_image, convert_dtype
+from SUPIR.utils import shared
 from PIL import Image
 import numpy as np
 import os
@@ -13,7 +14,10 @@ elif torch.cuda.device_count() == 1:
     SUPIR_device = 'cuda:0'
     LLaVA_device = 'cuda:0'
 else:
-    raise ValueError('Currently support CUDA only.')
+    SUPIR_device = 'cpu'
+    LLaVA_device = 'cpu'
+
+bf16_supported = torch.cuda.is_bf16_supported()
 
 # hyparams here
 parser = argparse.ArgumentParser()
@@ -57,16 +61,48 @@ parser.add_argument("--options", type=str, default='SUPIR_v0', choices=["SUPIR_v
 parser.add_argument("--sampler", type=str, default='DPMPP2M', choices=["EDM", "DPMPP2M"])
 parser.add_argument("--use_fast_tile", action='store_true', default=False,
                     help="Use a faster tile encoding/decoding, may impact quality.")
+parser.add_argument("--fp8", action='store_true', default=False, 
+                    help="Enable loading model parameters in FP8 precision to reduce memory usage.")
+parser.add_argument("--fast_load_sd", action='store_true', default=False, 
+                    help="Enable fast loading of model state dict and to prevents unnecessary memory allocation.")
+parser.add_argument("--autotune", action='store_true', default=True, help="Automatically set precision parameters based on the amount of VRAM available.")
 args = parser.parse_args()
 print(args)
 use_llava = not args.no_llava
+
+total_vram = 100000
+if torch.cuda.is_available() and args.autotune:
+    # Get total GPU memory
+    total_vram = torch.cuda.get_device_properties(0).total_memory / 1024 ** 3
+    print(f"Autotune enabled, Total VRAM: {total_vram}GB")
+    if not args.fp8:
+        args.fp8 = total_vram <= 8
+    auto_unload = total_vram <= 12
+
+    if total_vram <= 24:
+        if not args.loading_half_params:
+            args.loading_half_params = True
+        if not args.use_tile_vae:
+            args.use_tile_vae = True
+    print("Auto Unload: ", auto_unload)
+    print("Half Params: ", args.loading_half_params)
+    print("FP8: ", args.fp8)
+    print("Tile VAE: ", args.use_tile_vae)
+
+shared.opts.half_mode = args.loading_half_params  
+shared.opts.fast_load_sd = args.fast_load_sd
+
+if args.fp8:
+    shared.opts.half_mode = args.fp8
+    shared.opts.fp8_storage = args.fp8
 
 # load SUPIR
 print('# load SUPIR')
 options_file = 'options/' + args.options + '.yaml'
 tiled = "TiledRestore" if args.use_tile_vae else "Restore"
 sampler_cls = f"sgm.modules.diffusionmodules.sampling.{tiled}{args.sampler}Sampler"
-model = create_SUPIR_model(options_file, weight_dtype=args.ae_dtype, supir_sign=args.SUPIR_sign, device=SUPIR_device, sampler=sampler_cls)
+weight_dtype = 'fp16' if bf16_supported == False else args.ae_dtype
+model = create_SUPIR_model(options_file, weight_dtype=weight_dtype, supir_sign=args.SUPIR_sign, device=SUPIR_device, sampler=sampler_cls)
 print('loaded SUPIR!')
 if args.loading_half_params:
     print('# load half model')
@@ -76,8 +112,9 @@ if args.use_tile_vae:
     print('# init tile vae')
     model.init_tile_vae(encoder_tile_size=args.encoder_tile_size, decoder_tile_size=args.decoder_tile_size, use_fast=args.use_fast_tile)
     print('inited tile vae!')
-model.ae_dtype = convert_dtype(args.ae_dtype)
-model.model.dtype = convert_dtype(args.diff_dtype)
+model.ae_dtype = convert_dtype('fp32' if bf16_supported == False else args.ae_dtype)
+model.model.dtype = convert_dtype('fp16' if bf16_supported == False else args.diff_dtype)
+
 if model is not None:
     print('# load model to ' + SUPIR_device)
     model = model.to(SUPIR_device)
