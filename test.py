@@ -152,7 +152,8 @@ for img_pth in os.listdir(args.img_dir):
                                     s_noise=args.s_noise, cfg_scale=args.s_cfg, control_scale=args.s_stage2, seed=args.seed,
                                     num_samples=args.num_samples, p_p=args.a_prompt, n_p=args.n_prompt, color_fix_type=args.color_fix_type,
                                     use_linear_CFG=args.linear_CFG, use_linear_control_scale=args.linear_s_stage2,
-                                    cfg_scale_start=args.spt_linear_CFG, control_scale_start=args.spt_linear_s_stage2)
+                                    cfg_scale_start=args.spt_linear_CFG, control_scale_start=args.spt_linear_s_stage2,
+                                    sampler_cls=sampler_cls)
     print('batchified!')
     # save
     for _i, sample in enumerate(samples):
