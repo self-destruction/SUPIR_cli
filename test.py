@@ -72,7 +72,7 @@ args = parser.parse_args()
 print(args)
 use_llava = not args.no_llava
 
-if args.img_path == '' && args.img_dir == '':
+if args.img_path == '' and args.img_dir == '':
     raise ValueError('img_path and img_dir are empty')
 
 total_vram = 100000
@@ -129,9 +129,9 @@ if model is not None:
     print('model loaded!')
 
 if args.img_path:
-    images = [args.img_path]  # список из одного элемента
+    images = [args.img_path]
 else:
-    images = os.listdir(args.img_dir)  # список всех изображений
+    images = os.listdir(args.img_dir)
 
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in images:
