@@ -1,6 +1,6 @@
 import torch.cuda
 import argparse
-from SUPIR.util import create_SUPIR_model, PIL2Tensor, Tensor2Numpy, Tensor2PIL, convert_dtype
+from SUPIR.util import create_SUPIR_model, PIL2Tensor, Tensor2Numpy, Tensor2PIL, HWC3, upscale_image, convert_dtype
 from PIL import Image
 import numpy as np
 import os
