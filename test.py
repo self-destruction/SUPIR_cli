@@ -155,7 +155,11 @@ for img_pth in os.listdir(args.img_dir):
                                     cfg_scale_start=args.spt_linear_CFG, control_scale_start=args.spt_linear_s_stage2,
                                     sampler_cls=sampler_cls)
     print('batchified!')
+    x_samples = (
+        einops.rearrange(samples, 'b c h w -> b h w c') * 127.5 + 127.5).cpu().numpy().round().clip(
+    0, 255).astype(np.uint8)
     # save
-    for _i, sample in enumerate(samples):
-        Tensor2PIL(sample, h0, w0).save(f'{args.save_dir}/{img_name}_{_i}.png')
+    for _i, x_sample in enumerate(x_samples):
+        Image.fromarray(x_sample).save(f'{args.save_dir}/{img_name}_{_i}.png')
+        # Tensor2PIL(sample, h0, w0).save(f'{args.save_dir}/{img_name}_{_i}.png')
 
