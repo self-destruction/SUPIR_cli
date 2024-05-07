@@ -151,7 +151,7 @@ class SUPIRModel(DiffusionEngine):
 
         print("Loading denoiser.")
         denoiser = lambda input, sigma, c, control_scale: self.denoiser(
-            self.model, input, sigma, c, control_scale, **kwargs
+            self.model, input, sigma, c, control_scale
         )
         print("Loaded denoiser.")
 
