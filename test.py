@@ -66,7 +66,7 @@ print('# load SUPIR')
 options_file = 'options/' + args.options + '.yaml'
 tiled = "TiledRestore" if args.use_tile_vae else "Restore"
 sampler_cls = f"sgm.modules.diffusionmodules.sampling.{tiled}{args.sampler}Sampler"
-model = create_SUPIR_model(options_file, weight_dtype=args.ae_dtype, supir_sign=args.SUPIR_sign, device=SUPIR_device, ckpt=sampler_cls)
+model = create_SUPIR_model(options_file, weight_dtype=args.ae_dtype, supir_sign=args.SUPIR_sign, device=SUPIR_device, sampler=sampler_cls)
 print('loaded SUPIR!')
 if args.loading_half_params:
     print('# load half model')
