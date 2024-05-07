@@ -65,7 +65,7 @@ parser.add_argument("--fp8", action='store_true', default=False,
                     help="Enable loading model parameters in FP8 precision to reduce memory usage.")
 parser.add_argument("--fast_load_sd", action='store_true', default=False, 
                     help="Enable fast loading of model state dict and to prevents unnecessary memory allocation.")
-parser.add_argument("--autotune", action='store_true', default=True, help="Automatically set precision parameters based on the amount of VRAM available.")
+parser.add_argument("--autotune", action='store_true', default=False, help="Automatically set precision parameters based on the amount of VRAM available.")
 args = parser.parse_args()
 print(args)
 use_llava = not args.no_llava
