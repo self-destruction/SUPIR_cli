@@ -6,6 +6,7 @@ from PIL import Image
 import numpy as np
 import os
 from torch.nn.functional import interpolate
+import einops
 
 if torch.cuda.device_count() >= 2:
     SUPIR_device = 'cuda:0'
