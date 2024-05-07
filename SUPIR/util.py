@@ -27,10 +27,11 @@ def load_state_dict(ckpt_path, location='cpu'):
     return state_dict
 
 
-def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device='cpu', ckpt=None, sampler="DPMPP2M"):
+def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device='cpu', ckpt=None, sampler=""):
     # Load the model configuration
     config = OmegaConf.load(config_path)
-    config.model.params.sampler_config.target = sampler
+    if sampler != "":
+        config.model.params.sampler_config.target = sampler
     if ckpt:
         config.SDXL_CKPT = ckpt
 
@@ -41,7 +42,7 @@ def create_SUPIR_model(config_path, weight_dtype='bf16', supir_sign=None, device
     }   
     # Instantiate model from config
     print(f'Loading model from [{config_path}]')
-    print(OmegaConf.to_yaml(config))
+    # print(OmegaConf.to_yaml(config))
     if shared.opts.fast_load_sd:
         with sd_model_initialization.DisableInitialization(disable_clip=False):
             with sd_model_initialization.InitializeOnMeta():    
