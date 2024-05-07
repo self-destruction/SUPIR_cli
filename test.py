@@ -104,10 +104,10 @@ sampler_cls = f"sgm.modules.diffusionmodules.sampling.{tiled}{args.sampler}Sampl
 weight_dtype = 'fp16' if bf16_supported == False else args.ae_dtype
 model = create_SUPIR_model(options_file, weight_dtype=weight_dtype, supir_sign=args.SUPIR_sign, device=SUPIR_device, sampler=sampler_cls)
 print('loaded SUPIR!')
-if args.loading_half_params:
-    print('# load half model')
-    model = model.half()
-    print('loaded half model!')
+# if args.loading_half_params:
+#     print('# load half model')
+#     model = model.half()
+#     print('loaded half model!')
 if args.use_tile_vae:
     print('# init tile vae')
     model.init_tile_vae(encoder_tile_size=args.encoder_tile_size, decoder_tile_size=args.decoder_tile_size, use_fast=args.use_fast_tile)
