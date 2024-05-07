@@ -151,8 +151,8 @@ model:
         unreal engine, blurring, dirty, messy, worst quality, low quality, frames, watermark, signature, 
         jpeg artifacts, deformed, lowres, over-smooth'
 
-SDXL_CKPT: /kaggle/working/SUPIR_kaggle/models/Juggernaut_RunDiffusionPhoto2_Lightning_4Steps.safetensors
-SUPIR_CKPT_F: /kaggle/working/SUPIR_kaggle/models/v0F.ckpt
-SUPIR_CKPT_Q: /kaggle/working/SUPIR_kaggle/models/v0Q.ckpt
+SDXL_CKPT: /kaggle/temp/SUPIR_kaggle/models/Juggernaut_RunDiffusionPhoto2_Lightning_4Steps.safetensors
+SUPIR_CKPT_F: /kaggle/temp/SUPIR_kaggle/models/v0F.ckpt
+SUPIR_CKPT_Q: /kaggle/temp/SUPIR_kaggle/models/v0Q.ckpt
 SUPIR_CKPT: ~
 
