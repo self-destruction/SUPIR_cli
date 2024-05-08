@@ -135,11 +135,11 @@ else:
 
 os.makedirs(args.save_dir, exist_ok=True)
 for img_pth in images:
-    img_name = os.path.splitext(img_pth)[0]
+    img_name = os.path.basename(img_pth)
     print('# start process image: ' + img_name)
     captions = ['']
 
-    LQ_ips = Image.open(os.path.join(args.img_dir, img_pth))
+    LQ_ips = Image.open(img_pth)
     # Pil -> NumPy
     input_image = np.array(LQ_ips)
 
@@ -170,6 +170,6 @@ for img_pth in images:
     0, 255).astype(np.uint8)
     # save
     for _i, x_sample in enumerate(x_samples):
-        Image.fromarray(x_sample).save(f'{args.save_dir}/{img_name}_{_i}.png')
+        Image.fromarray(x_sample).save(f'{args.save_dir}/{os.path.splitext(img_name)[0]}_{_i}.png')
         # Tensor2PIL(sample, h0, w0).save(f'{args.save_dir}/{img_name}_{_i}.png')
 
